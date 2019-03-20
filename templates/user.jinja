@@ -1,0 +1,23 @@
+{% set ID = env['deployment']%}
+
+resources:
+- name: {{ ID }}-db-root
+  type: sqladmin.v1beta4.user
+  properties:
+    name: root
+    host: "%"
+    instance: $(ref.{{ ID }}-master.name)
+    password: {{ properties["rootUserPassword"] }}
+  metadata:
+    dependsOn:
+    - {{ ID }}-db
+- name: {{ ID }}-db-{{ properties["dbReadWriteUserName"] }}
+  type: sqladmin.v1beta4.user
+  properties:
+    name: {{ properties["dbReadWriteUserName"] }}
+    host: "cloudsqlproxy~%"
+    instance: $(ref.{{ ID }}-master.name)
+    password: ""
+  metadata:
+    dependsOn:
+    - {{ ID }}-db-root

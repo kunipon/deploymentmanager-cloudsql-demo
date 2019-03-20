@@ -1,0 +1,37 @@
+{% set ID = env['deployment'] %}
+
+resources:
+{% if properties['failover'] %}
+- name: {{ ID }}-failover
+  type: sqladmin.v1beta4.instance
+  properties:
+    backendType: SECOND_GEN
+    instanceType: READ_REPLICA_INSTANCE
+    databaseVersion: {{ properties['cloudsql']['databaseVersion'] }}
+    region: {{ properties['cloudsql']['region'] }}
+    masterInstanceName: $(ref.{{ ID }}-master.name)
+    replicaConfiguration:
+      failoverTarget: true
+    settings:
+      tier: {{ properties['masterTier'] }}
+{% endif %}
+
+{% for i in range(properties['readReplicas']) %}
+- name: {{ ID }}-rr-{{ i }}
+  type: sqladmin.v1beta4.instance
+  properties:
+    backendType: SECOND_GEN
+    instanceType: READ_REPLICA_INSTANCE
+    databaseVersion: {{ properties['cloudsql']['databaseVersion'] }}
+    region: {{ properties['cloudsql']['region'] }}
+    masterInstanceName: $(ref.{{ ID }}-master.name)
+    replicaConfiguration:
+      failoverTarget: false
+    settings:
+      tier: {{ properties['readReplicaTier'] }}
+  {% if properties['failover'] %}
+  metadata:
+    dependsOn:
+      - {{ ID }}-failover
+  {% endif %}
+{% endfor %}

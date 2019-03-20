@@ -1,0 +1,23 @@
+imports:
+- path: templates/master-db.jinja
+  name: master-db.jinja
+- path: templates/replicas.jinja
+  name: replicas.jinja
+- path: templates/user.jinja
+  name: user.jinja
+
+resources:
+- name: kunipon-master-db
+  type: master-db.jinja
+  properties:
+    tier: db-f1-micro
+    dataDiskSizeGb: 10
+    autoResize: false
+    buckupEnables: false
+    failover: false
+    readReplicas: 0
+- name: kunipon-db-user
+  type: user.jinja
+  properties:
+    rootUserPassword: root-password
+    dbReadWriteUserName: kunipon

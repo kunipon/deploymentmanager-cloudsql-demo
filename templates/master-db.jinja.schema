@@ -1,0 +1,32 @@
+info:
+  title: CloudSQL
+  author: kunikunipon
+  description: |
+    Creates a CloudSQL deployment
+  version: 0.1
+
+imports:
+- path: replicas.jinja
+
+properties:
+  cloudsql:
+    type: object
+    default:
+      properties: 
+    properties:
+      databaseVersion:
+        type: string
+        description: MYSQL_5_7 or MYSQL_5_6
+        default: MYSQL_5_7
+      dataDiskType:
+        type: string
+        decription: PD_SSD or PD_HDD
+        default: PD_SSD
+      region:
+        type: string
+        description: i.e. us-central1
+        default: asia-northeast1
+      zone:
+        type: string
+        description: i.e. us-central1-a
+        default: asia-northeast1-a

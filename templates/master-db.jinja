@@ -1,0 +1,52 @@
+{% set ID = env['deployment'] %}
+
+{%- macro dbDependencyList(failover='', readReplicas='') -%}
+  {% if failover %}
+    - {{ ID }}-failover
+  {% endif %}
+  {% for i in range(readReplicas) %}
+    - {{ ID }}-rr-{{ i }}
+  {% endfor %}
+{%- endmacro %}
+
+{% set dbDeps = dbDependencyList(properties['failover'], properties['readReplicas']) %}
+
+resources:
+- name: {{ ID }}-master
+  type: sqladmin.v1beta4.instance
+  properties:
+    backendType: SECOND_GEN
+    region: {{ properties["cloudsql"]["region"] }}
+    databaseVersion: {{ properties["cloudsql"]["databaseVersion"] }}
+    instanceType: CLOUD_SQL_INSTANCE
+    settings:
+      tier: {{ properties["tier"] }}
+      dataDiskType: {{ properties["cloudsql"]["dataDiskType"] }}
+      dataDiskSizeGb: {{ properties["dataDiskSizeGb"] }}
+      storageAutoResize: {{ properties["autoResize"] }}
+      {% if properties['autoResize'] %}
+      storageAutoResizeLimit: {{ properties["autoResizeLimit"] }}
+      {% endif %}
+      activationPolicy: ALWAYS
+      backupConfiguration:
+        enabled: {{ properties["buckupEnables"] }}
+        binaryLogEnabled: {{ properties["buckupEnables"] }}
+        {% if properties['buckupEnables'] %}
+        startTime: {{ properties["buckupStartTime"] }}
+        {% endif %}
+      databaseFlags:
+      - name: character_set_server
+        value: utf8mb4
+      - name: default_time_zone
+        value: +09:00
+
+- name: {{ ID }}-db
+  type: sqladmin.v1beta4.database
+  properties:
+    name: {{ ID }}-db
+    instance: $(ref.{{ ID }}-master.name)
+    charset: utf8mb4
+    collation: utf8mb4_general_ci
+  metadata:
+    dependsOn: 
+      {{ dbDeps }}

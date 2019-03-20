@@ -1,0 +1,42 @@
+version: 2.1
+
+orbs:
+  gcp-cli: circleci/gcp-cli@1.1.0
+
+jobs:
+  cloudsql-deploy:
+    parameters:
+      env:
+        type: enum
+        enum: ["dev", "prod", "stage"]
+      deploy-command:
+        type: enum
+        enum: ["create", "update"]
+    executor:
+      name: gcp-cli/google
+      sdk-version: $GOOGLE_SDK_VERSION
+    steps:
+      - gcp-cli/install
+      - gcp-cli/initialize
+      - checkout
+      - run: gcloud deployment-manager deployments << parameters.deploy-command >> cloudsql-manage --config deployment-manager/cloudsql/<< parameters.env >>-settings.yml
+
+workflows:
+  cloudsql-deploy:
+    jobs:
+      - cloudsql-deploy:
+          name: deploy_prod_env
+          env: prod
+          deploy-command: update
+          context: deploymnet-settings-prod
+          filters:
+            branches:
+              only: master
+      - cloudsql-deploy:
+          name: deploy_stage_env
+          env: stage
+          deploy-command: update
+          context: deploymnet-settings-stage
+          filters:
+            branches:
+              only: stage
